@@ -29,6 +29,7 @@ internal fun LibraryTabs(
             // TODO: use default when width is fixed upstream
             // https://issuetracker.google.com/issues/242879624
             divider = {},
+            containerColor = MaterialTheme.colorScheme.background,
         ) {
             categories.forEachIndexed { index, category ->
                 Tab(
@@ -40,11 +41,14 @@ internal fun LibraryTabs(
                             badgeCount = getItemCountForCategory(category),
                         )
                     },
-                    unselectedContentColor = MaterialTheme.colorScheme.onSurface,
+                    selectedContentColor = MaterialTheme.colorScheme.primary,
+                    unselectedContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
             }
         }
 
-        HorizontalDivider()
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant,
+        )
     }
 }
