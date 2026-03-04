@@ -352,12 +352,13 @@ class MainActivity : BaseActivity() {
      * When custom animation is used, status and navigation bar color will be set to transparent and will be restored
      * after the animation is finished.
      */
-    @Suppress("Deprecation")
     private fun setSplashScreenExitAnimation(splashScreen: SplashScreen?) {
         val root = findViewById<View>(android.R.id.content)
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && splashScreen != null) {
-            window.statusBarColor = Color.TRANSPARENT
-            window.navigationBarColor = Color.TRANSPARENT
+        if (splashScreen != null) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                window.statusBarColor = Color.TRANSPARENT
+                window.navigationBarColor = Color.TRANSPARENT
+            }
 
             splashScreen.setOnExitAnimationListener { splashProvider ->
                 // For some reason the SplashScreen applies (incorrect) Y translation to the iconView
@@ -378,6 +379,10 @@ class MainActivity : BaseActivity() {
                     addUpdateListener { va ->
                         val value = va.animatedValue as Float
                         splashProvider.view.alpha = value
+                        // Zoom in scale effect along with fade
+                        val scale = 1.0f + ((1f - value) * 0.2f)
+                        splashProvider.iconView.scaleX = scale
+                        splashProvider.iconView.scaleY = scale
                     }
                     doOnEnd {
                         splashProvider.remove()
@@ -470,6 +475,6 @@ class MainActivity : BaseActivity() {
 }
 
 // Splash screen
-private const val SPLASH_MIN_DURATION = 500 // ms
+private const val SPLASH_MIN_DURATION = 1200 // ms
 private const val SPLASH_MAX_DURATION = 5000 // ms
 private const val SPLASH_EXIT_ANIM_DURATION = 400L // ms

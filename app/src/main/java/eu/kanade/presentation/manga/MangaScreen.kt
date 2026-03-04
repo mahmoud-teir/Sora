@@ -329,28 +329,7 @@ private fun MangaScreenSmallImpl(
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        floatingActionButton = {
-            val isFABVisible = remember(chapters) {
-                chapters.fastAny { !it.chapter.read } && !isAnySelected
-            }
-            SmallExtendedFloatingActionButton(
-                text = {
-                    val isReading = remember(state.chapters) {
-                        state.chapters.fastAny { it.chapter.read }
-                    }
-                    Text(
-                        text = stringResource(if (isReading) MR.strings.action_resume else MR.strings.action_start),
-                    )
-                },
-                icon = { Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null) },
-                onClick = onContinueReading,
-                expanded = chapterListState.shouldExpandFAB(),
-                modifier = Modifier.animateFloatingActionButton(
-                    visible = isFABVisible,
-                    alignment = Alignment.BottomEnd,
-                ),
-            )
-        },
+        floatingActionButton = {},
     ) { contentPadding ->
         val topPadding = contentPadding.calculateTopPadding()
 
@@ -388,6 +367,21 @@ private fun MangaScreenSmallImpl(
                             onCoverClick = onCoverClicked,
                             doSearch = onSearch,
                         )
+                    }
+
+                    item(
+                        key = "primary_action",
+                        contentType = "primary_action",
+                    ) {
+                        val isReading = remember(state.chapters) {
+                            state.chapters.fastAny { it.chapter.read }
+                        }
+                        if (chapters.fastAny { !it.chapter.read } && !isAnySelected) {
+                            eu.kanade.presentation.manga.components.MangaPrimaryActionButton(
+                                hasStarted = isReading,
+                                onClick = onContinueReading,
+                            )
+                        }
                     }
 
                     item(
@@ -571,30 +565,7 @@ fun MangaScreenLargeImpl(
             }
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        floatingActionButton = {
-            val isFABVisible = remember(chapters) {
-                chapters.fastAny { !it.chapter.read } && !isAnySelected
-            }
-            SmallExtendedFloatingActionButton(
-                text = {
-                    val isReading = remember(state.chapters) {
-                        state.chapters.fastAny { it.chapter.read }
-                    }
-                    Text(
-                        text = stringResource(
-                            if (isReading) MR.strings.action_resume else MR.strings.action_start,
-                        ),
-                    )
-                },
-                icon = { Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null) },
-                onClick = onContinueReading,
-                expanded = chapterListState.shouldExpandFAB(),
-                modifier = Modifier.animateFloatingActionButton(
-                    visible = isFABVisible,
-                    alignment = Alignment.BottomEnd,
-                ),
-            )
-        },
+        floatingActionButton = {},
     ) { contentPadding ->
         PullRefresh(
             refreshing = state.isRefreshingData,
@@ -626,6 +597,15 @@ fun MangaScreenLargeImpl(
                             onCoverClick = onCoverClicked,
                             doSearch = onSearch,
                         )
+                        val isReading = remember(state.chapters) {
+                            state.chapters.fastAny { it.chapter.read }
+                        }
+                        if (chapters.fastAny { !it.chapter.read } && !isAnySelected) {
+                            eu.kanade.presentation.manga.components.MangaPrimaryActionButton(
+                                hasStarted = isReading,
+                                onClick = onContinueReading,
+                            )
+                        }
                         MangaActionRow(
                             favorite = state.manga.favorite,
                             trackingCount = state.trackingCount,

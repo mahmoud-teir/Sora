@@ -10,7 +10,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,6 +29,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -55,6 +65,7 @@ fun LibraryContent(
     getDisplayMode: (Int) -> PreferenceMutableState<LibraryDisplayMode>,
     getColumnsForOrientation: (Boolean) -> PreferenceMutableState<Int>,
     getItemsForCategory: (Category) -> List<LibraryItem>,
+    onSearchQueryChange: (String?) -> Unit,
 ) {
     Column(
         modifier = Modifier.padding(
@@ -68,72 +79,65 @@ fun LibraryContent(
         val scope = rememberCoroutineScope()
         var isRefreshing by remember(pagerState.currentPage) { mutableStateOf(false) }
 
-        // Get all items for carousel and genre extraction
-        val allItems = remember(categories) {
-            categories.flatMap { getItemsForCategory(it) }
-                .distinctBy { it.id }
-        }
 
-        // Hero carousel — show recently read manga
-        val heroItems = remember(allItems) {
-            allItems
-                .sortedByDescending { it.libraryManga.lastRead }
-                .take(5)
-        }
 
-        if (heroItems.isNotEmpty() && searchQuery.isNullOrEmpty() && selection.isEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            LibraryHeroCarousel(
-                items = heroItems,
-                onMangaClick = onClickManga,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        // Genre filter chips
-        var selectedGenre by remember { mutableStateOf<String?>(null) }
-        val genres = remember(allItems) {
-            allItems
-                .flatMap { it.libraryManga.manga.genre.orEmpty() }
-                .groupingBy { it }
-                .eachCount()
-                .entries
-                .sortedByDescending { it.value }
-                .take(10)
-                .map { it.key }
-        }
-
-        if (genres.isNotEmpty() && searchQuery.isNullOrEmpty() && selection.isEmpty()) {
-            LibraryGenreChips(
-                genres = genres,
-                selectedGenre = selectedGenre,
-                onGenreSelected = { selectedGenre = it },
-            )
-        }
-
-        // "My Library" section header
-        if (searchQuery.isNullOrEmpty() && selection.isEmpty()) {
-            val totalCount = allItems.size
-            Row(
+        // Search Bar Pill
+        if (selection.isEmpty()) {
+            Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                shape = RoundedCornerShape(50),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
             ) {
-                Text(
-                    text = "My Library",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = "$totalCount Series",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    fontSize = 13.sp,
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Search,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(end = 12.dp),
+                    )
+                    androidx.compose.foundation.layout.Box(modifier = Modifier.weight(1f)) {
+                        if (searchQuery.isNullOrEmpty()) {
+                            Text(
+                                text = "Search in your library...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        BasicTextField(
+                            value = searchQuery ?: "",
+                            onValueChange = onSearchQueryChange,
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                color = MaterialTheme.colorScheme.onSurface,
+                            ),
+                            cursorBrush = SolidColor(androidx.compose.ui.graphics.Color(0xFF2977FF)), // Sora Blue
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    if (!searchQuery.isNullOrEmpty()) {
+                        IconButton(
+                            onClick = { onSearchQueryChange(null) },
+                            modifier = Modifier.padding(start = 8.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear search",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
             }
         }
+
+
 
         if (showPageTabs && categories.isNotEmpty() && (categories.size > 1 || !categories.first().isSystemCategory)) {
             LaunchedEffect(categories) {
@@ -178,14 +182,7 @@ fun LibraryContent(
                 getDisplayMode = getDisplayMode,
                 getColumnsForOrientation = getColumnsForOrientation,
                 getItemsForCategory = { category ->
-                    val items = getItemsForCategory(category)
-                    if (selectedGenre != null) {
-                        items.filter { item ->
-                            item.libraryManga.manga.genre?.any { it.equals(selectedGenre, true) } == true
-                        }
-                    } else {
-                        items
-                    }
+                    getItemsForCategory(category)
                 },
                 onClickManga = { category, manga ->
                     if (selection.isNotEmpty()) {

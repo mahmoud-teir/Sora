@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -32,7 +33,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -398,6 +402,58 @@ private fun ContinueReadingButton(
                 imageVector = Icons.Filled.PlayArrow,
                 contentDescription = stringResource(MR.strings.action_resume),
                 modifier = Modifier.size(iconSize),
+            )
+        }
+    }
+}
+
+/**
+ * Layout of "Add More" dummy card in the library grid.
+ */
+@Composable
+fun AddMoreLibraryItem(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    GridItemSelectable(
+        isSelected = false,
+        onClick = onClick,
+        onLongClick = {},
+        modifier = modifier
+    ) {
+        Column {
+            val strokeColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(MangaCover.Book.ratio)
+                    .padding(4.dp)
+                    .drawBehind {
+                        val stroke = Stroke(
+                            width = 2.dp.toPx(),
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(20f, 20f), 0f)
+                        )
+                        drawRoundRect(
+                            color = strokeColor,
+                            style = stroke,
+                            cornerRadius = CornerRadius(8.dp.toPx())
+                        )
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = stringResource(MR.strings.action_add),
+                    modifier = Modifier.size(32.dp),
+                    tint = strokeColor
+                )
+            }
+            GridItemTitle(
+                modifier = Modifier.padding(4.dp),
+                title = "Add More",
+                style = MaterialTheme.typography.titleSmall,
+                minLines = 2,
+                maxLines = 2,
             )
         }
     }

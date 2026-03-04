@@ -7,6 +7,7 @@ import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -135,11 +136,23 @@ data object LibraryTab : Tab {
                             }
                         }
                     },
-                    searchQuery = state.searchQuery,
-                    onSearchQueryChange = screenModel::search,
                     // For scroll overlay when no tab
                     scrollBehavior = scrollBehavior.takeIf { !state.showCategoryTabs },
                 )
+            },
+            floatingActionButton = {
+                if (!state.selectionMode) {
+                    androidx.compose.material3.FloatingActionButton(
+                        onClick = { navigator.push(CategoryScreen()) },
+                        containerColor = androidx.compose.ui.graphics.Color(0xFF2977FF), // Sora Blue
+                        contentColor = androidx.compose.ui.graphics.Color.White,
+                    ) {
+                        androidx.compose.material3.Icon(
+                            imageVector = androidx.compose.material.icons.Icons.Outlined.Edit,
+                            contentDescription = stringResource(MR.strings.action_edit_categories),
+                        )
+                    }
+                }
             },
             bottomBar = {
                 LibraryBottomActionMenu(
@@ -214,6 +227,7 @@ data object LibraryTab : Tab {
                         getDisplayMode = { screenModel.getDisplayMode() },
                         getColumnsForOrientation = { screenModel.getColumnsForOrientation(it) },
                         getItemsForCategory = { state.getItemsForCategory(it) },
+                        onSearchQueryChange = screenModel::search,
                     )
                 }
             }
