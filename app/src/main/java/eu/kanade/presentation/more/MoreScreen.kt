@@ -1,32 +1,62 @@
 package eu.kanade.presentation.more
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material.icons.outlined.AttachMoney
-import androidx.compose.material.icons.outlined.CloudOff
+import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.GetApp
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.QueryStats
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.vectorResource
-import eu.kanade.presentation.more.settings.widget.SwitchPreferenceWidget
-import eu.kanade.presentation.more.settings.widget.TextPreferenceWidget
-import eu.kanade.tachiyomi.R
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import eu.kanade.tachiyomi.ui.more.DownloadQueueState
 import tachiyomi.core.common.Constants
-import tachiyomi.i18n.MR
-import tachiyomi.presentation.core.components.ScrollbarLazyColumn
 import tachiyomi.presentation.core.components.material.Scaffold
-import tachiyomi.presentation.core.i18n.pluralStringResource
-import tachiyomi.presentation.core.i18n.stringResource
+
+// ──────────────── Design Tokens ────────────────
+private val AppBackground = Color(0xFF0E1015)
+private val CardBackground = Color(0xFF171B2A)
+private val AccentBlue    = Color(0xFF2F80FF)
+private val AccentGreen   = Color(0xFF34C759)
+private val AccentRed     = Color(0xFFFF5C5C)
+private val TextPrimary   = Color(0xFFFFFFFF)
+private val TextSecondary = Color(0xFF9AA0A6)
+private val IconBg        = Color(0xFF1E2540)
 
 @Composable
 fun MoreScreen(
@@ -44,115 +74,341 @@ fun MoreScreen(
 ) {
     val uriHandler = LocalUriHandler.current
 
-    Scaffold { contentPadding ->
-        ScrollbarLazyColumn(
-            modifier = Modifier.padding(contentPadding),
+    Scaffold(
+        containerColor = AppBackground,
+    ) { contentPadding ->
+        Column(
+            modifier = Modifier
+                .padding(contentPadding)
+                .verticalScroll(rememberScrollState()),
         ) {
-            item {
-                LogoHeader()
-            }
-            item {
-                SwitchPreferenceWidget(
-                    title = stringResource(MR.strings.label_downloaded_only),
-                    subtitle = stringResource(MR.strings.downloaded_only_summary),
-                    icon = Icons.Outlined.CloudOff,
-                    checked = downloadedOnly,
-                    onCheckedChanged = onDownloadedOnlyChange,
+
+            // ─── Header ──────────────────────────────────────────────────────
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = "Sora",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 26.sp,
+                    color = TextPrimary,
                 )
-            }
-            item {
-                SwitchPreferenceWidget(
-                    title = stringResource(MR.strings.pref_incognito_mode),
-                    subtitle = stringResource(MR.strings.pref_incognito_mode_summary),
-                    icon = ImageVector.vectorResource(R.drawable.ic_glasses_24dp),
-                    checked = incognitoMode,
-                    onCheckedChanged = onIncognitoModeChange,
-                )
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(CardBackground, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Notifications,
+                        contentDescription = "Notifications",
+                        tint = TextPrimary,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
             }
 
-            item { HorizontalDivider() }
+            Spacer(modifier = Modifier.height(8.dp))
 
-            item {
+            // ─── Profile Card ─────────────────────────────────────────────────
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .background(CardBackground, RoundedCornerShape(20.dp))
+                    .clickable { },
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    // Avatar
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .background(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(AccentBlue.copy(alpha = 0.4f), CardBackground),
+                                ),
+                                shape = CircleShape,
+                            )
+                            .clip(CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Person,
+                            contentDescription = null,
+                            tint = AccentBlue,
+                            modifier = Modifier.size(34.dp),
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(14.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Sora User",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 18.sp,
+                            color = TextPrimary,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Outlined.Star,
+                                contentDescription = null,
+                                tint = AccentBlue,
+                                modifier = Modifier.size(14.dp),
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Premium Member",
+                                fontSize = 14.sp,
+                                color = AccentBlue,
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = Icons.Outlined.ChevronRight,
+                        contentDescription = null,
+                        tint = TextSecondary,
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            // ─── DOWNLOADS & CONTENT ─────────────────────────────────────────
+            SectionHeader(title = "DOWNLOADS & CONTENT")
+            SectionGroup {
                 val downloadQueueState = downloadQueueStateProvider()
-                TextPreferenceWidget(
-                    title = stringResource(MR.strings.label_download_queue),
-                    subtitle = when (downloadQueueState) {
-                        DownloadQueueState.Stopped -> null
-                        is DownloadQueueState.Paused -> {
-                            val pending = downloadQueueState.pending
-                            if (pending == 0) {
-                                stringResource(MR.strings.paused)
-                            } else {
-                                "${stringResource(MR.strings.paused)} • ${
-                                    pluralStringResource(
-                                        MR.plurals.download_queue_summary,
-                                        count = pending,
-                                        pending,
-                                    )
-                                }"
-                            }
-                        }
-                        is DownloadQueueState.Downloading -> {
-                            val pending = downloadQueueState.pending
-                            pluralStringResource(MR.plurals.download_queue_summary, count = pending, pending)
-                        }
-                    },
+                val downloadSubtitle = when (downloadQueueState) {
+                    DownloadQueueState.Stopped -> null
+                    is DownloadQueueState.Paused -> "Paused · ${downloadQueueState.pending} pending"
+                    is DownloadQueueState.Downloading -> "${downloadQueueState.pending} downloading"
+                }
+                MenuItem(
                     icon = Icons.Outlined.GetApp,
-                    onPreferenceClick = onClickDownloadQueue,
+                    title = "Download Queue",
+                    subtitle = downloadSubtitle,
+                    onClick = onClickDownloadQueue,
                 )
-            }
-            item {
-                TextPreferenceWidget(
-                    title = stringResource(MR.strings.categories),
+                MenuDivider()
+                MenuItem(
                     icon = Icons.AutoMirrored.Outlined.Label,
-                    onPreferenceClick = onClickCategories,
+                    title = "Categories",
+                    onClick = onClickCategories,
                 )
             }
-            item {
-                TextPreferenceWidget(
-                    title = stringResource(MR.strings.label_stats),
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ─── ANALYTICS ─────────────────────────────────────────────────
+            SectionHeader(title = "ANALYTICS")
+            SectionGroup {
+                MenuItem(
                     icon = Icons.Outlined.QueryStats,
-                    onPreferenceClick = onClickStats,
+                    title = "Statistics",
+                    onClick = onClickStats,
                 )
-            }
-            item {
-                TextPreferenceWidget(
-                    title = stringResource(MR.strings.label_data_storage),
+                MenuDivider()
+                MenuItem(
                     icon = Icons.Outlined.Storage,
-                    onPreferenceClick = onClickDataAndStorage,
+                    title = "Data & Storage",
+                    onClick = onClickDataAndStorage,
                 )
             }
 
-            item { HorizontalDivider() }
+            Spacer(modifier = Modifier.height(24.dp))
 
-            item {
-                TextPreferenceWidget(
-                    title = stringResource(MR.strings.label_settings),
+            // ─── APP ─────────────────────────────────────────────────────────
+            SectionHeader(title = "APP")
+            SectionGroup {
+                MenuItem(
                     icon = Icons.Outlined.Settings,
-                    onPreferenceClick = onClickSettings,
+                    title = "Settings",
+                    onClick = onClickSettings,
                 )
-            }
-            item {
-                TextPreferenceWidget(
-                    title = stringResource(MR.strings.pref_category_about),
+                MenuDivider()
+                MenuItem(
                     icon = Icons.Outlined.Info,
-                    onPreferenceClick = onClickAbout,
+                    title = "About",
+                    onClick = onClickAbout,
                 )
             }
-            item {
-                TextPreferenceWidget(
-                    title = stringResource(MR.strings.label_help),
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ─── SUPPORT ─────────────────────────────────────────────────────
+            SectionHeader(title = "SUPPORT")
+            SectionGroup {
+                MenuItem(
                     icon = Icons.AutoMirrored.Outlined.HelpOutline,
-                    onPreferenceClick = { uriHandler.openUri(Constants.URL_HELP) },
+                    title = "Help Center",
+                    onClick = { uriHandler.openUri(Constants.URL_HELP) },
+                )
+                MenuDivider()
+                MenuItem(
+                    icon = Icons.Outlined.AttachMoney,
+                    title = "Donate",
+                    trailingText = "Support Sora",
+                    trailingTextColor = AccentGreen,
+                    onClick = { uriHandler.openUri(Constants.URL_DONATE) },
                 )
             }
-            item {
-                TextPreferenceWidget(
-                    title = stringResource(MR.strings.label_donate),
-                    icon = Icons.Outlined.AttachMoney,
-                    onPreferenceClick = { uriHandler.openUri(Constants.URL_DONATE) },
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            // ─── Sign Out ─────────────────────────────────────────────────────
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .height(56.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color(0xFF2A1A1A),
+                                Color(0xFF1F1515),
+                            ),
+                        ),
+                        shape = RoundedCornerShape(20.dp),
+                    )
+                    .clickable { },
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "Sign Out",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp,
+                    color = AccentRed,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // ─── App Version ─────────────────────────────────────────────────
+            Text(
+                text = "Sora Version 2.4.0 (Build 892)",
+                fontSize = 12.sp,
+                color = TextSecondary,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            )
+        }
+    }
+}
+
+// ──────────────── Helper Composables ────────────────
+
+@Composable
+private fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 1.5.sp,
+        color = TextSecondary,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+    )
+    Spacer(modifier = Modifier.height(6.dp))
+}
+
+@Composable
+private fun SectionGroup(content: @Composable () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .background(CardBackground, RoundedCornerShape(16.dp)),
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun MenuDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(start = 68.dp),
+        color = Color.White.copy(alpha = 0.06f),
+    )
+}
+
+@Composable
+private fun MenuItem(
+    icon: ImageVector,
+    title: String,
+    subtitle: String? = null,
+    trailingText: String? = null,
+    trailingTextColor: Color = TextSecondary,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // Icon container
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .background(IconBg, RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = AccentBlue,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        // Title
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = TextPrimary,
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    fontSize = 13.sp,
+                    color = TextSecondary,
                 )
             }
         }
+
+        // Optional trailing text
+        if (trailingText != null) {
+            Text(
+                text = trailingText,
+                fontSize = 13.sp,
+                color = trailingTextColor,
+                modifier = Modifier.padding(end = 4.dp),
+            )
+        }
+
+        // Chevron
+        Icon(
+            imageVector = Icons.Outlined.ChevronRight,
+            contentDescription = null,
+            tint = TextSecondary.copy(alpha = 0.5f),
+            modifier = Modifier.size(18.dp),
+        )
     }
 }
