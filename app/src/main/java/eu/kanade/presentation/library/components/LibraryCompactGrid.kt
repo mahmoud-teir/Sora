@@ -65,7 +65,7 @@ internal fun LibraryCompactGrid(
         }
         
         item(contentType = "library_add_more_item") {
-            AddMoreLibraryItem(onClick = { /* TODO Handle Add More CTA */ })
+            AddMoreLibraryItem(onClick = onGlobalSearchClicked)
         }
     }
 }
