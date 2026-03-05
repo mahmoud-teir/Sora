@@ -48,15 +48,12 @@ import eu.kanade.tachiyomi.ui.more.DownloadQueueState
 import tachiyomi.core.common.Constants
 import tachiyomi.presentation.core.components.material.Scaffold
 
+import androidx.compose.material3.MaterialTheme
+
 // ──────────────── Design Tokens ────────────────
-private val AppBackground = Color(0xFF0E1015)
-private val CardBackground = Color(0xFF171B2A)
 private val AccentBlue    = Color(0xFF2F80FF)
 private val AccentGreen   = Color(0xFF34C759)
 private val AccentRed     = Color(0xFFFF5C5C)
-private val TextPrimary   = Color(0xFFFFFFFF)
-private val TextSecondary = Color(0xFF9AA0A6)
-private val IconBg        = Color(0xFF1E2540)
 
 @Composable
 fun MoreScreen(
@@ -75,7 +72,7 @@ fun MoreScreen(
     val uriHandler = LocalUriHandler.current
 
     Scaffold(
-        containerColor = AppBackground,
+        containerColor = MaterialTheme.colorScheme.background,
     ) { contentPadding ->
         Column(
             modifier = Modifier
@@ -95,18 +92,18 @@ fun MoreScreen(
                     text = "Sora",
                     fontWeight = FontWeight.Bold,
                     fontSize = 26.sp,
-                    color = TextPrimary,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Box(
                     modifier = Modifier
                         .size(40.dp)
-                        .background(CardBackground, CircleShape),
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Notifications,
                         contentDescription = "Notifications",
-                        tint = TextPrimary,
+                        tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.size(20.dp),
                     )
                 }
@@ -119,7 +116,7 @@ fun MoreScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .background(CardBackground, RoundedCornerShape(20.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(20.dp))
                     .clickable { },
             ) {
                 Row(
@@ -134,7 +131,7 @@ fun MoreScreen(
                             .size(64.dp)
                             .background(
                                 brush = Brush.radialGradient(
-                                    colors = listOf(AccentBlue.copy(alpha = 0.4f), CardBackground),
+                                    colors = listOf(AccentBlue.copy(alpha = 0.4f), MaterialTheme.colorScheme.surfaceContainerHigh),
                                 ),
                                 shape = CircleShape,
                             )
@@ -156,7 +153,7 @@ fun MoreScreen(
                             text = "Sora User",
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 18.sp,
-                            color = TextPrimary,
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -178,7 +175,7 @@ fun MoreScreen(
                     Icon(
                         imageVector = Icons.Outlined.ChevronRight,
                         contentDescription = null,
-                        tint = TextSecondary,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -273,12 +270,7 @@ fun MoreScreen(
                     .padding(horizontal = 16.dp)
                     .height(56.dp)
                     .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                Color(0xFF2A1A1A),
-                                Color(0xFF1F1515),
-                            ),
-                        ),
+                        color = MaterialTheme.colorScheme.errorContainer,
                         shape = RoundedCornerShape(20.dp),
                     )
                     .clickable { },
@@ -288,7 +280,7 @@ fun MoreScreen(
                     text = "Sign Out",
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
-                    color = AccentRed,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
                 )
             }
 
@@ -298,7 +290,7 @@ fun MoreScreen(
             Text(
                 text = "Sora Version 2.4.0 (Build 892)",
                 fontSize = 12.sp,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 32.dp),
@@ -317,7 +309,7 @@ private fun SectionHeader(title: String) {
         fontSize = 12.sp,
         fontWeight = FontWeight.SemiBold,
         letterSpacing = 1.5.sp,
-        color = TextSecondary,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
     )
     Spacer(modifier = Modifier.height(6.dp))
@@ -329,7 +321,7 @@ private fun SectionGroup(content: @Composable () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .background(CardBackground, RoundedCornerShape(16.dp)),
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(16.dp)),
     ) {
         content()
     }
@@ -339,7 +331,7 @@ private fun SectionGroup(content: @Composable () -> Unit) {
 private fun MenuDivider() {
     HorizontalDivider(
         modifier = Modifier.padding(start = 68.dp),
-        color = Color.White.copy(alpha = 0.06f),
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
     )
 }
 
@@ -349,7 +341,7 @@ private fun MenuItem(
     title: String,
     subtitle: String? = null,
     trailingText: String? = null,
-    trailingTextColor: Color = TextSecondary,
+    trailingTextColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     onClick: () -> Unit,
 ) {
     Row(
@@ -363,7 +355,7 @@ private fun MenuItem(
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .background(IconBg, RoundedCornerShape(12.dp)),
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -382,13 +374,13 @@ private fun MenuItem(
                 text = title,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
-                color = TextPrimary,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             if (subtitle != null) {
                 Text(
                     text = subtitle,
                     fontSize = 13.sp,
-                    color = TextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -407,7 +399,7 @@ private fun MenuItem(
         Icon(
             imageVector = Icons.Outlined.ChevronRight,
             contentDescription = null,
-            tint = TextSecondary.copy(alpha = 0.5f),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
             modifier = Modifier.size(18.dp),
         )
     }
