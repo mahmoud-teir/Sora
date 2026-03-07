@@ -169,40 +169,22 @@ data object BrowseTab : Tab {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Outlined.Book,
-                            contentDescription = null,
-                            tint = SoraBlue,
-                            modifier = Modifier.size(24.dp),
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Sora",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            color = MaterialTheme.colorScheme.onBackground,
-                        )
-                    }
+                    Text(
+                        text = "Browse",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 28.sp,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        IconButton(onClick = { navigator.push(GlobalSearchScreen()) }) {
+                        IconButton(
+                            onClick = { navigator.push(GlobalSearchScreen()) },
+                            modifier = Modifier
+                                .background(Color(0xFF202020), CircleShape)
+                        ) {
                             Icon(
                                 imageVector = Icons.Outlined.FilterList,
                                 contentDescription = stringResource(MR.strings.action_filter),
                                 tint = MaterialTheme.colorScheme.onBackground,
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Person,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(20.dp),
                             )
                         }
                     }
@@ -230,7 +212,11 @@ data object BrowseTab : Tab {
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = stringResource(MR.strings.action_search_hint),
+                        text = when (pagerState.currentPage) {
+                            1 -> "Search extensions..."
+                            2 -> "Search library to migrate..."
+                            else -> stringResource(MR.strings.action_search_hint)
+                        },
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 14.sp,
                     )
@@ -274,7 +260,7 @@ data object BrowseTab : Tab {
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        sourceItems.take(8).forEach { item ->
+                        sourceItems.forEach { item ->
                             val isSelected = selectedSourceId == item.source.id ||
                                 (selectedSourceId == null && item == sourceItems.firstOrNull())
                             FilterChip(

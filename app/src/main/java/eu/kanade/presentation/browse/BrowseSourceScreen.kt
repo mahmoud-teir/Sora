@@ -85,6 +85,7 @@ fun BrowseSourceContent(
                 is LoadState.Error -> getErrorMessage(errorState)
                 else -> stringResource(MR.strings.no_results_found)
             },
+            image = androidx.compose.ui.res.painterResource(id = eu.kanade.tachiyomi.R.drawable.empty_state_anime),
             actions = if (source is LocalSource) {
                 persistentListOf(
                     EmptyScreenAction(

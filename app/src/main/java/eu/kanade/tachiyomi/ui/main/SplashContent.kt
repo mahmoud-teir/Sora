@@ -83,55 +83,7 @@ fun SplashContent() {
             contentScale = ContentScale.Crop
         )
 
-        // Main Content
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .offset(y = floatAnim.dp)
-                    .scale(scaleAnim)
-            ) {
-                // Glow effect
-                Box(
-                    modifier = Modifier
-                        .size(160.dp)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    Color(0xFFE94560).copy(alpha = 0.4f),
-                                    Color.Transparent
-                                )
-                            )
-                        )
-                )
-
-                Image(
-                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                    contentDescription = null,
-                    modifier = Modifier.size(180.dp)
-                )
-            }
-
-            Text(
-                text = "Mihon",
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 4.sp
-                ),
-                modifier = Modifier.padding(top = 16.dp)
-            )
-            
-            Text(
-                text = "Your Premium Manga Reader",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = Color.White.copy(alpha = 0.7f),
-                ),
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
+        // Intentionally left empty of logo and text per request
 
         // Loading Indicator
         Column(

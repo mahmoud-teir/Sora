@@ -14,12 +14,13 @@ import kotlinx.coroutines.launch
 import tachiyomi.domain.category.interactor.CreateCategoryWithName
 import tachiyomi.domain.category.interactor.DeleteCategory
 import tachiyomi.domain.category.interactor.GetCategories
+import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.category.interactor.RenameCategory
 import tachiyomi.domain.category.interactor.ReorderCategory
 import tachiyomi.domain.category.interactor.UpdateCategory
-import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.category.model.CategoryUpdate
 import tachiyomi.i18n.MR
+import tachiyomi.domain.library.service.LibraryPreferences
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -30,6 +31,7 @@ class CategoryScreenModel(
     private val reorderCategory: ReorderCategory = Injekt.get(),
     private val renameCategory: RenameCategory = Injekt.get(),
     private val updateCategory: UpdateCategory = Injekt.get(),
+    private val libraryPreferences: LibraryPreferences = Injekt.get(),
 ) : StateScreenModel<CategoryScreenState>(CategoryScreenState.Loading) {
 
     private val _events: Channel<CategoryEvent> = Channel()
@@ -50,11 +52,21 @@ class CategoryScreenModel(
         }
     }
 
-    fun createCategory(name: String) {
+    fun createCategory(name: String, colorHex: String = "#2D7CFF") {
         screenModelScope.launch {
             when (createCategoryWithName.await(name)) {
                 is CreateCategoryWithName.Result.InternalError -> _events.send(CategoryEvent.InternalError)
-                else -> {}
+                else -> {
+                    // Category created successfully. We need its ID to save the color.
+                    // Since createCategoryWithName doesn't return the ID, we can fetch categories
+                    // and find the one with the matching name. (Categories names are unique)
+                    getCategories.await().find { it.name == name }?.let { newCategory ->
+                        val currentColors = libraryPreferences.categoryColors().get().toMutableSet()
+                        currentColors.removeAll { it.startsWith("${newCategory.id}:") }
+                        currentColors.add("${newCategory.id}:$colorHex")
+                        libraryPreferences.categoryColors().set(currentColors)
+                    }
+                }
             }
         }
     }

@@ -24,6 +24,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults.rememberTooltipPositionProvider
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -131,7 +132,7 @@ fun AppBar(
     Column(
         modifier = modifier,
     ) {
-        TopAppBar(
+        CenterAlignedTopAppBar(
             navigationIcon = {
                 if (isActionMode) {
                     IconButton(onClick = onCancelActionMode) {
@@ -150,7 +151,7 @@ fun AppBar(
             },
             title = titleContent,
             actions = actions,
-            colors = TopAppBarDefaults.topAppBarColors(
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                 containerColor = backgroundColor ?: MaterialTheme.colorScheme.surfaceColorAtElevation(
                     elevation = if (isActionMode) 3.dp else 0.dp,
                 ),

@@ -16,13 +16,28 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.SwapHoriz
+import androidx.compose.material.icons.outlined.WarningAmber
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.clickable
 import eu.kanade.domain.source.interactor.SetMigrateSorting
-import eu.kanade.presentation.browse.components.BaseSourceItem
 import eu.kanade.presentation.browse.components.SourceIcon
 import eu.kanade.tachiyomi.ui.browse.migration.sources.MigrateSourceScreenModel
 import eu.kanade.tachiyomi.util.system.copyToClipboard
@@ -57,7 +72,7 @@ fun MigrateSourceScreen(
             stringRes = MR.strings.information_empty_library,
             modifier = Modifier.padding(contentPadding),
         )
-        else ->
+        else -> Box(modifier = Modifier.fillMaxSize()) {
             MigrateSourceList(
                 list = state.items,
                 contentPadding = contentPadding,
@@ -71,6 +86,18 @@ fun MigrateSourceScreen(
                 sortingDirection = state.sortingDirection,
                 onToggleSortingDirection = onToggleSortingDirection,
             )
+            ExtendedFloatingActionButton(
+                text = { Text(text = "Migrate All", fontWeight = FontWeight.Bold) },
+                icon = { Icon(imageVector = Icons.Outlined.SwapHoriz, contentDescription = null) },
+                onClick = { /* TODO implement bulk migrate if supported by core */ },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+                    .padding(bottom = contentPadding.calculateBottomPadding()),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        }
     }
 }
 
@@ -88,6 +115,38 @@ private fun MigrateSourceList(
     ScrollbarLazyColumn(
         contentPadding = contentPadding + topSmallPaddingValues,
     ) {
+        item(key = "migration-info-row") {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column {
+                    Text(
+                        text = "Migration",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = "Auto-selection enabled",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Text(
+                    text = "${list.sumOf { it.second }} library items",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
+
         stickyHeader(key = STICKY_HEADER_KEY_PREFIX) {
             Row(
                 modifier = Modifier
@@ -151,55 +210,98 @@ private fun MigrateSourceItem(
     onLongClickItem: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    BaseSourceItem(
-        modifier = modifier,
-        source = source,
-        showLanguageInContent = source.lang != "",
-        onClickItem = onClickItem,
-        onLongClickItem = onLongClickItem,
-        icon = { SourceIcon(source = source) },
-        action = {
-            BadgeGroup {
-                Badge(text = "$count")
-            }
-        },
-        content = { _, sourceLangString ->
-            Column(
+    val sourceName = source.name.ifBlank { source.id.toString() }
+    val sourceLang = if (source.lang.isNotEmpty()) source.lang.uppercase() else ""
+    val isStub = source.isStub
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .background(Color(0xFF202020), RoundedCornerShape(16.dp))
+            .clickable(onClick = onClickItem)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
+        ) {
+            Box(
                 modifier = Modifier
-                    .padding(horizontal = MaterialTheme.padding.medium)
-                    .weight(1f),
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(Color.Transparent),
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = source.name.ifBlank { source.id.toString() },
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.padding.small),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (sourceLangString != null) {
-                        Text(
-                            modifier = Modifier.secondaryItemAlpha(),
-                            text = sourceLangString,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
+                SourceIcon(source = source)
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = sourceName,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.White,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    BadgeGroup {
+                        Badge(text = "$count")
                     }
-                    if (source.isStub) {
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (isStub) {
+                        Icon(
+                            imageVector = Icons.Outlined.ErrorOutline,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            modifier = Modifier.secondaryItemAlpha(),
                             text = stringResource(MR.strings.not_installed),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Outlined.WarningAmber,
+                            contentDescription = null,
+                            tint = Color(0xFFF9A825),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Source: $sourceLang",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.LightGray
                         )
                     }
                 }
             }
-        },
-    )
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+        Button(
+            onClick = onClickItem,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.White,
+                contentColor = Color.Black
+            ),
+            shape = RoundedCornerShape(50),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+            modifier = Modifier.height(32.dp)
+        ) {
+            Text(
+                text = "Migrate",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
 }

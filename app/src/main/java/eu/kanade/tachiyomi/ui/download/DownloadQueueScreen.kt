@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.outlined.Sort
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.outlined.DownloadForOffline
 import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.CircularProgressIndicator
@@ -105,8 +106,9 @@ object DownloadQueueScreen : Screen() {
         ) { contentPadding ->
             if (allDownloads.isEmpty()) {
                 EmptyScreen(
-                    stringRes = MR.strings.information_no_downloads,
-                    modifier = Modifier.padding(contentPadding),
+                    message = "Your download queue is currently empty.\nBeautiful manga adventures await you!",
+                    image = androidx.compose.ui.res.painterResource(id = eu.kanade.tachiyomi.R.drawable.empty_downloads_anime),
+                    modifier = Modifier.padding(contentPadding)
                 )
                 return@Scaffold
             }
@@ -182,23 +184,26 @@ object DownloadQueueScreen : Screen() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DownloadQueueHeader(
     onBack: () -> Unit,
     onClearAll: () -> Unit,
     hasDownloads: Boolean,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .padding(top = 8.dp), // Safe area inset approx
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    androidx.compose.material3.CenterAlignedTopAppBar(
+        title = {
+            Text(
+                text = "Download Queue",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
+        navigationIcon = {
             Box(
                 modifier = Modifier
+                    .padding(start = 16.dp)
                     .size(40.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest)
@@ -212,25 +217,26 @@ private fun DownloadQueueHeader(
                     modifier = Modifier.size(20.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = "Download Queue",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-        if (hasDownloads) {
-            androidx.compose.material3.TextButton(onClick = onClearAll) {
-                Text(
-                    text = "Clear All",
-                    color = SoraBlue,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium
-                )
+        },
+        actions = {
+            if (hasDownloads) {
+                androidx.compose.material3.TextButton(
+                    onClick = onClearAll,
+                    modifier = Modifier.padding(end = 8.dp)
+                ) {
+                    Text(
+                        text = "Clear All",
+                        color = SoraBlue,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
-        }
-    }
+        },
+        colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent
+        )
+    )
 }
 
 @Composable

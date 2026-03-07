@@ -10,7 +10,7 @@ import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import eu.kanade.presentation.category.CategoryScreen
-import eu.kanade.presentation.category.components.CategoryCreateDialog
+import eu.kanade.presentation.category.components.CategoryCreateBottomSheet
 import eu.kanade.presentation.category.components.CategoryDeleteDialog
 import eu.kanade.presentation.category.components.CategoryRenameDialog
 import eu.kanade.presentation.util.Screen
@@ -49,9 +49,12 @@ class CategoryScreen : Screen() {
         when (val dialog = successState.dialog) {
             null -> {}
             CategoryDialog.Create -> {
-                CategoryCreateDialog(
+                CategoryCreateBottomSheet(
                     onDismissRequest = screenModel::dismissDialog,
-                    onCreate = screenModel::createCategory,
+                    onCreate = { name, color -> 
+                        screenModel.createCategory(name, color)
+                        screenModel.dismissDialog()
+                    },
                     categories = successState.categories.fastMap { it.name }.toImmutableList(),
                 )
             }

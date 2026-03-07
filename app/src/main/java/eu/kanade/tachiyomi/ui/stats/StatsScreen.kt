@@ -24,24 +24,15 @@ class StatsScreen : Screen() {
         val screenModel = rememberScreenModel { StatsScreenModel() }
         val state by screenModel.state.collectAsState()
 
-        Scaffold(
-            topBar = { scrollBehavior ->
-                AppBar(
-                    title = stringResource(MR.strings.label_stats),
-                    navigateUp = navigator::pop,
-                    scrollBehavior = scrollBehavior,
-                )
-            },
-        ) { paddingValues ->
-            if (state is StatsScreenState.Loading) {
-                LoadingScreen()
-                return@Scaffold
-            }
-
-            StatsScreenContent(
-                state = state as StatsScreenState.Success,
-                paddingValues = paddingValues,
-            )
+        if (state is StatsScreenState.Loading) {
+            LoadingScreen()
+            return
         }
+
+        StatsScreenContent(
+            state = state as StatsScreenState.Success,
+            paddingValues = androidx.compose.foundation.layout.PaddingValues(),
+            navigator = navigator
+        )
     }
 }

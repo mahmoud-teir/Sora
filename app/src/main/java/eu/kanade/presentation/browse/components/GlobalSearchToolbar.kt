@@ -70,34 +70,37 @@ fun GlobalSearchToolbar(
                     ),
             ) {
                 // ─── Header ────────────────────────────────────────────────
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    androidx.compose.material3.IconButton(onClick = navigateUp) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                            contentDescription = stringResource(MR.strings.action_bar_up_description),
-                            tint = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        imageVector = Icons.Outlined.Book,
-                        contentDescription = null,
-                        tint = androidx.compose.ui.graphics.Color(0xFF2D7CFF),
-                        modifier = Modifier.size(24.dp),
+                androidx.compose.material3.CenterAlignedTopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Outlined.Book,
+                                contentDescription = null,
+                                tint = androidx.compose.ui.graphics.Color(0xFF2D7CFF),
+                                modifier = Modifier.size(24.dp),
+                            )
+                            androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Sora",
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                fontSize = 20.sp,
+                                color = MaterialTheme.colorScheme.onBackground,
+                            )
+                        }
+                    },
+                    navigationIcon = {
+                        androidx.compose.material3.IconButton(onClick = navigateUp) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                                contentDescription = stringResource(MR.strings.action_bar_up_description),
+                                tint = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                    },
+                    colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
+                        containerColor = androidx.compose.ui.graphics.Color.Transparent
                     )
-                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Sora",
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                        fontSize = 20.sp,
-                        color = MaterialTheme.colorScheme.onBackground,
-                    )
-                }
+                )
 
                 // ─── Search Bar ────────────────────────────────────────────
                 val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }

@@ -28,6 +28,8 @@ import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.secondaryItemAlpha
 import kotlin.random.Random
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.painter.Painter
 
 data class EmptyScreenAction(
     val stringRes: StringResource,
@@ -39,11 +41,13 @@ data class EmptyScreenAction(
 fun EmptyScreen(
     stringRes: StringResource,
     modifier: Modifier = Modifier,
+    image: Painter? = null,
     actions: ImmutableList<EmptyScreenAction>? = null,
 ) {
     EmptyScreen(
         message = stringResource(stringRes),
         modifier = modifier,
+        image = image,
         actions = actions,
     )
 }
@@ -52,6 +56,7 @@ fun EmptyScreen(
 fun EmptyScreen(
     message: String,
     modifier: Modifier = Modifier,
+    image: Painter? = null,
     actions: ImmutableList<EmptyScreenAction>? = null,
 ) {
     val face = remember { getRandomErrorFace() }
@@ -63,12 +68,21 @@ fun EmptyScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-            Text(
-                text = face,
-                modifier = Modifier.secondaryItemAlpha(),
-                style = MaterialTheme.typography.displayMedium,
+        if (image != null) {
+            Image(
+                painter = image,
+                contentDescription = null,
+                modifier = Modifier
+                    .padding(bottom = 16.dp)
             )
+        } else {
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                Text(
+                    text = face,
+                    modifier = Modifier.secondaryItemAlpha(),
+                    style = MaterialTheme.typography.displayMedium,
+                )
+            }
         }
 
         Text(

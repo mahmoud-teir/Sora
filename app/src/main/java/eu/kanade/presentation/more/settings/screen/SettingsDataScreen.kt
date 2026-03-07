@@ -4,140 +4,128 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.text.format.Formatter
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.HelpOutline
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Speed
+import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MultiChoiceSegmentedButtonRow
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.hippo.unifile.UniFile
 import eu.kanade.presentation.more.settings.Preference
-import eu.kanade.presentation.more.settings.screen.data.CreateBackupScreen
-import eu.kanade.presentation.more.settings.screen.data.RestoreBackupScreen
-import eu.kanade.presentation.more.settings.screen.data.StorageInfo
-import eu.kanade.presentation.more.settings.widget.BasePreferenceWidget
-import eu.kanade.presentation.more.settings.widget.PrefsHorizontalPadding
-import eu.kanade.presentation.util.relativeTimeSpanString
-import eu.kanade.tachiyomi.data.backup.create.BackupCreateJob
-import eu.kanade.tachiyomi.data.backup.restore.BackupRestoreJob
+import eu.kanade.presentation.util.LocalBackPress
 import eu.kanade.tachiyomi.data.cache.ChapterCache
-import eu.kanade.tachiyomi.data.export.LibraryExporter
-import eu.kanade.tachiyomi.data.export.LibraryExporter.ExportOptions
-import eu.kanade.tachiyomi.util.system.DeviceUtil
+import eu.kanade.tachiyomi.util.storage.DiskUtil
 import eu.kanade.tachiyomi.util.system.toast
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import logcat.LogPriority
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.storage.displayablePath
 import tachiyomi.core.common.util.lang.launchNonCancellable
 import tachiyomi.core.common.util.lang.withUIContext
 import tachiyomi.core.common.util.system.logcat
-import tachiyomi.domain.backup.service.BackupPreferences
 import tachiyomi.domain.library.service.LibraryPreferences
-import tachiyomi.domain.manga.interactor.GetFavorites
-import tachiyomi.domain.manga.model.Manga
 import tachiyomi.domain.storage.service.StoragePreferences
 import tachiyomi.i18n.MR
-import tachiyomi.presentation.core.components.material.TextButton
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.util.collectAsState
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.io.File
 
 object SettingsDataScreen : SearchableSettings {
 
     val restorePreferenceKeyString = MR.strings.label_backup
     const val HELP_URL = "https://mihon.app/docs/faq/storage"
 
+    private val SoraBlue = Color(0xFF2D7CFF)
+    private val CacheBlue = Color(0xFF1E5BB8)
+    private val FreeGrey = Color(0xFF424242)
+    private val CardBackground = Color(0xFF1A1A1A)
+    private val AmoledBackground = Color(0xFF000000)
+
     @ReadOnlyComposable
     @Composable
     override fun getTitleRes() = MR.strings.label_data_storage
 
     @Composable
-    override fun RowScope.AppBarAction() {
-        val uriHandler = LocalUriHandler.current
-        IconButton(onClick = { uriHandler.openUri(HELP_URL) }) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
-                contentDescription = stringResource(MR.strings.tracking_guide),
-            )
-        }
-    }
-
-    @Composable
-    override fun getPreferences(): List<Preference> {
-        val backupPreferences = Injekt.get<BackupPreferences>()
-        val storagePreferences = Injekt.get<StoragePreferences>()
-
-        return persistentListOf(
-            getStorageLocationPref(storagePreferences = storagePreferences),
-            Preference.PreferenceItem.InfoPreference(stringResource(MR.strings.pref_storage_location_info)),
-
-            getBackupAndRestoreGroup(backupPreferences = backupPreferences),
-            getDataGroup(),
-            getExportGroup(),
-        )
-    }
+    override fun getPreferences(): List<Preference> = emptyList()
 
     @Composable
     fun storageLocationPicker(
         storageDirPref: tachiyomi.core.common.preference.Preference<String>,
     ): ManagedActivityResultLauncher<Uri?, Uri?> {
         val context = LocalContext.current
-
         return rememberLauncherForActivityResult(
             contract = ActivityResultContracts.OpenDocumentTree(),
         ) { uri ->
             if (uri != null) {
-                val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-
-                // For some reason InkBook devices do not implement the SAF properly. Persistable URI grants do not
-                // work. However, simply retrieving the URI and using it works fine for these devices. Access is not
-                // revoked after the app is closed or the device is restarted.
-                // This also holds for some Samsung devices. Thus, we simply execute inside of a try-catch block and
-                // ignore the exception if it is thrown.
+                val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 try {
                     context.contentResolver.takePersistableUriPermission(uri, flags)
                 } catch (e: SecurityException) {
                     logcat(LogPriority.ERROR, e)
                     context.toast(MR.strings.file_picker_uri_permission_unsupported)
                 }
-
                 UniFile.fromUri(context, uri)?.let {
                     storageDirPref.set(it.uri.toString())
                 }
@@ -151,320 +139,439 @@ object SettingsDataScreen : SearchableSettings {
     ): String {
         val context = LocalContext.current
         val storageDir by storageDirPref.collectAsState()
-
         if (storageDir == storageDirPref.defaultValue()) {
             return stringResource(MR.strings.no_location_set)
         }
-
         return remember(storageDir) {
             val file = UniFile.fromUri(context, storageDir.toUri())
             file?.displayablePath
         } ?: stringResource(MR.strings.invalid_location, storageDir)
     }
 
-    @Composable
-    private fun getStorageLocationPref(
-        storagePreferences: StoragePreferences,
-    ): Preference.PreferenceItem.TextPreference {
-        val context = LocalContext.current
-        val pickStorageLocation = storageLocationPicker(storagePreferences.baseStorageDirectory())
-
-        return Preference.PreferenceItem.TextPreference(
-            title = stringResource(MR.strings.pref_storage_location),
-            subtitle = storageLocationText(storagePreferences.baseStorageDirectory()),
-            onClick = {
-                try {
-                    pickStorageLocation.launch(null)
-                } catch (e: ActivityNotFoundException) {
-                    context.toast(MR.strings.file_picker_error)
-                }
-            },
-        )
+    private fun getUniFileSize(uniFile: UniFile?): Long {
+        if (uniFile == null) return 0L
+        if (uniFile.isFile) return uniFile.length()
+        var size = 0L
+        uniFile.listFiles()?.forEach { child ->
+            size += getUniFileSize(child)
+        }
+        return size
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    private fun getBackupAndRestoreGroup(backupPreferences: BackupPreferences): Preference.PreferenceGroup {
+    override fun Content() {
         val context = LocalContext.current
         val navigator = LocalNavigator.currentOrThrow
-
-        val lastAutoBackup by backupPreferences.lastAutoBackupTimestamp().collectAsState()
-
-        val chooseBackup = rememberLauncherForActivityResult(
-            object : ActivityResultContracts.GetContent() {
-                override fun createIntent(context: Context, input: String): Intent {
-                    val intent = super.createIntent(context, input)
-                    return Intent.createChooser(intent, context.stringResource(MR.strings.file_select_backup))
-                }
-            },
-        ) {
-            if (it == null) {
-                context.toast(MR.strings.file_null_uri_error)
-                return@rememberLauncherForActivityResult
-            }
-
-            navigator.push(RestoreBackupScreen(it.toString()))
-        }
-
-        return Preference.PreferenceGroup(
-            title = stringResource(MR.strings.label_backup),
-            preferenceItems = persistentListOf(
-                // Manual actions
-                Preference.PreferenceItem.CustomPreference(
-                    title = stringResource(restorePreferenceKeyString),
-                ) {
-                    BasePreferenceWidget(
-                        subcomponent = {
-                            MultiChoiceSegmentedButtonRow(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(intrinsicSize = IntrinsicSize.Min)
-                                    .padding(horizontal = PrefsHorizontalPadding),
-                            ) {
-                                SegmentedButton(
-                                    modifier = Modifier.fillMaxHeight(),
-                                    checked = false,
-                                    onCheckedChange = { navigator.push(CreateBackupScreen()) },
-                                    shape = SegmentedButtonDefaults.itemShape(0, 2),
-                                ) {
-                                    Text(stringResource(MR.strings.pref_create_backup))
-                                }
-                                SegmentedButton(
-                                    modifier = Modifier.fillMaxHeight(),
-                                    checked = false,
-                                    onCheckedChange = {
-                                        if (!BackupRestoreJob.isRunning(context)) {
-                                            if (DeviceUtil.isMiui && DeviceUtil.isMiuiOptimizationDisabled()) {
-                                                context.toast(MR.strings.restore_miui_warning)
-                                            }
-
-                                            // no need to catch because it's wrapped with a chooser
-                                            chooseBackup.launch("*/*")
-                                        } else {
-                                            context.toast(MR.strings.restore_in_progress)
-                                        }
-                                    },
-                                    shape = SegmentedButtonDefaults.itemShape(1, 2),
-                                ) {
-                                    Text(stringResource(MR.strings.pref_restore_backup))
-                                }
-                            }
-                        },
-                    )
-                },
-
-                // Automatic backups
-                Preference.PreferenceItem.ListPreference(
-                    preference = backupPreferences.backupInterval(),
-                    entries = persistentMapOf(
-                        0 to stringResource(MR.strings.off),
-                        6 to stringResource(MR.strings.update_6hour),
-                        12 to stringResource(MR.strings.update_12hour),
-                        24 to stringResource(MR.strings.update_24hour),
-                        48 to stringResource(MR.strings.update_48hour),
-                        168 to stringResource(MR.strings.update_weekly),
-                    ),
-                    title = stringResource(MR.strings.pref_backup_interval),
-                    onValueChanged = {
-                        BackupCreateJob.setupTask(context, it)
-                        true
-                    },
-                ),
-                Preference.PreferenceItem.InfoPreference(
-                    stringResource(MR.strings.backup_info) + "\n\n" +
-                        stringResource(MR.strings.last_auto_backup_info, relativeTimeSpanString(lastAutoBackup)),
-                ),
-            ),
-        )
-    }
-
-    @Composable
-    private fun getDataGroup(): Preference.PreferenceGroup {
-        val context = LocalContext.current
+        val handleBack = LocalBackPress.current
         val scope = rememberCoroutineScope()
         val libraryPreferences = remember { Injekt.get<LibraryPreferences>() }
-
+        val storagePreferences = remember { Injekt.get<StoragePreferences>() }
         val chapterCache = remember { Injekt.get<ChapterCache>() }
-        var cacheReadableSizeSema by remember { mutableIntStateOf(0) }
-        var cacheReadableSize by remember { mutableStateOf(context.stringResource(MR.strings.calculating)) }
-        LaunchedEffect(cacheReadableSizeSema) {
-            cacheReadableSize = chapterCache.getReadableSize()
-        }
+        
+        val autoClearCache by libraryPreferences.autoClearChapterCache().collectAsState()
+        val storageDirPref = storagePreferences.baseStorageDirectory()
+        val storageDir by storageDirPref.collectAsState()
+        val pickStorageLocation = storageLocationPicker(storageDirPref)
 
-        return Preference.PreferenceGroup(
-            title = stringResource(MR.strings.pref_storage_usage),
-            preferenceItems = persistentListOf(
-                Preference.PreferenceItem.CustomPreference(
-                    title = stringResource(MR.strings.pref_storage_usage),
-                ) {
-                    BasePreferenceWidget(
-                        subcomponent = {
-                            StorageInfo(
-                                modifier = Modifier.padding(horizontal = PrefsHorizontalPadding),
-                            )
-                        },
-                    )
-                },
+        var totalSpace by remember { mutableLongStateOf(0L) }
+        var freeSpace by remember { mutableLongStateOf(0L) }
+        var cacheSpace by remember { mutableLongStateOf(0L) }
+        var mangaSpace by remember { mutableLongStateOf(0L) }
+        var isCalculating by remember { mutableStateOf(true) }
+        var refreshTrigger by remember { mutableStateOf(0) }
 
-                Preference.PreferenceItem.TextPreference(
-                    title = stringResource(MR.strings.pref_clear_chapter_cache),
-                    subtitle = stringResource(MR.strings.used_cache, cacheReadableSize),
-                    onClick = {
-                        scope.launchNonCancellable {
-                            try {
-                                val deletedFiles = chapterCache.clear()
-                                withUIContext {
-                                    context.toast(context.stringResource(MR.strings.cache_deleted, deletedFiles))
-                                    cacheReadableSizeSema++
-                                }
-                            } catch (e: Throwable) {
-                                logcat(LogPriority.ERROR, e)
-                                withUIContext { context.toast(MR.strings.cache_delete_error) }
-                            }
-                        }
-                    },
-                ),
-                Preference.PreferenceItem.SwitchPreference(
-                    preference = libraryPreferences.autoClearChapterCache(),
-                    title = stringResource(MR.strings.pref_auto_clear_chapter_cache),
-                ),
-            ),
-        )
-    }
-
-    @Composable
-    private fun getExportGroup(): Preference.PreferenceGroup {
-        var showDialog by remember { mutableStateOf(false) }
-        var exportOptions by remember {
-            mutableStateOf(
-                ExportOptions(
-                    includeTitle = true,
-                    includeAuthor = true,
-                    includeArtist = true,
-                ),
-            )
-        }
-
-        val context = LocalContext.current
-        val scope = rememberCoroutineScope()
-        val getFavorites = remember { Injekt.get<GetFavorites>() }
-        var favorites by remember { mutableStateOf<List<Manga>>(emptyList()) }
-        LaunchedEffect(Unit) {
-            favorites = getFavorites.await()
-        }
-
-        val saveFileLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.CreateDocument("text/csv"),
-        ) { uri ->
-            uri?.let {
-                scope.launch {
-                    LibraryExporter.exportToCsv(
-                        context = context,
-                        uri = it,
-                        favorites = favorites,
-                        options = exportOptions,
-                        onExportComplete = {
-                            scope.launch(Dispatchers.Main) {
-                                context.toast(MR.strings.library_exported)
-                            }
-                        },
-                    )
-                }
+        LaunchedEffect(storageDir, refreshTrigger) {
+            withContext(Dispatchers.IO) {
+                isCalculating = true
+                val storages = DiskUtil.getExternalStorages(context)
+                val primaryStorage = storages.firstOrNull() ?: File(context.filesDir.absolutePath)
+                totalSpace = DiskUtil.getTotalStorageSpace(primaryStorage)
+                freeSpace = DiskUtil.getAvailableStorageSpace(primaryStorage)
+                val cacheDir = File(context.cacheDir, "chapter_disk_cache")
+                cacheSpace = DiskUtil.getDirectorySize(cacheDir)
+                
+                val baseFile = UniFile.fromUri(context, storageDir.toUri())
+                val downloadsFile = baseFile?.findFile("downloads")
+                mangaSpace = getUniFileSize(downloadsFile)
+                isCalculating = false
             }
         }
 
-        if (showDialog) {
-            ColumnSelectionDialog(
-                options = exportOptions,
-                onConfirm = { options ->
-                    exportOptions = options
-                    saveFileLauncher.launch("mihon_library.csv")
-                },
-                onDismissRequest = { showDialog = false },
-            )
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = "Data & Storage",
+                            color = Color.White,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(
+                            onClick = { 
+                                if (handleBack != null) handleBack.invoke() 
+                                else navigator.pop() 
+                            },
+                            modifier = Modifier
+                                .padding(start = 8.dp, end = 8.dp)
+                                .size(44.dp)
+                                .background(Color(0xFF262626), CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = AmoledBackground
+                    )
+                )
+            },
+            containerColor = AmoledBackground
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                StorageChart(
+                    totalSpace = totalSpace,
+                    freeSpace = freeSpace,
+                    cacheSpace = cacheSpace,
+                    mangaSpace = mangaSpace,
+                    isCalculating = isCalculating
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                SectionTitle(title = "DOWNLOADS")
+                Spacer(modifier = Modifier.height(16.dp))
+                CardContainer {
+                    LocationItem(
+                        iconVector = Icons.Outlined.Folder,
+                        title = "Download Location",
+                        subtitle = storageLocationText(storageDirPref),
+                        onClick = {
+                            try {
+                                pickStorageLocation.launch(null)
+                            } catch (e: ActivityNotFoundException) {
+                                context.toast(MR.strings.file_picker_error)
+                            }
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ToggleItem(
+                        iconVector = Icons.Outlined.DeleteOutline,
+                        title = "Auto-delete",
+                        subtitle = "Remove finished chapters",
+                        isChecked = autoClearCache,
+                        onCheckedChange = { libraryPreferences.autoClearChapterCache().set(it) }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                SectionTitle(title = "PERFORMANCE")
+                Spacer(modifier = Modifier.height(16.dp))
+                CardContainer {
+                    ActionItem(
+                        iconVector = Icons.Outlined.Speed,
+                        title = "Current Cache",
+                        subtitle = "Reduces loading times",
+                        trailingText = if (isCalculating) "..." else Formatter.formatFileSize(context, cacheSpace),
+                        onClick = {
+                            scope.launchNonCancellable {
+                                try {
+                                    val deletedFiles = chapterCache.clear()
+                                    withUIContext {
+                                        context.toast(context.stringResource(MR.strings.cache_deleted, deletedFiles))
+                                        refreshTrigger++
+                                    }
+                                } catch (e: Throwable) {
+                                    logcat(LogPriority.ERROR, e)
+                                    withUIContext { context.toast(context.stringResource(MR.strings.cache_delete_error)) }
+                                }
+                            }
+                        }
+                    )
+                }
+                Spacer(modifier = Modifier.height(48.dp))
+            }
+        }
+    }
+
+    @Composable
+    private fun StorageChart(
+        totalSpace: Long,
+        freeSpace: Long,
+        cacheSpace: Long,
+        mangaSpace: Long,
+        isCalculating: Boolean
+    ) {
+        val context = LocalContext.current
+        val safeTotal = totalSpace.coerceAtLeast(1L)
+        val usedSpace = (safeTotal - freeSpace).coerceAtLeast(0L)
+        
+        val mangaRatio = (mangaSpace.toFloat() / safeTotal).coerceIn(0f, 1f)
+        val cacheRatio = (cacheSpace.toFloat() / safeTotal).coerceIn(0f, 1f)
+        val freeRatio = (freeSpace.toFloat() / safeTotal).coerceIn(0f, 1f)
+        
+        val animManga = remember { Animatable(0f) }
+        val animCache = remember { Animatable(0f) }
+        val animFree = remember { Animatable(0f) }
+
+        LaunchedEffect(mangaRatio, cacheRatio, freeRatio) {
+            animManga.snapTo(0f)
+            animCache.snapTo(0f)
+            animFree.snapTo(0f)
+            if (!isCalculating) {
+                animManga.animateTo(mangaRatio * 360f, tween(1000, easing = FastOutSlowInEasing))
+                animCache.animateTo(cacheRatio * 360f, tween(1000, easing = FastOutSlowInEasing))
+                animFree.animateTo(freeRatio * 360f, tween(1000, easing = FastOutSlowInEasing))
+            }
         }
 
-        return Preference.PreferenceGroup(
-            title = stringResource(MR.strings.export),
-            preferenceItems = persistentListOf(
-                Preference.PreferenceItem.TextPreference(
-                    title = stringResource(MR.strings.library_list),
-                    onClick = { showDialog = true },
-                ),
-            ),
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier.size(260.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val strokeWidth = 14.dp.toPx()
+                    drawArc(
+                        color = Color(0xFF1E1E1E),
+                        startAngle = 0f,
+                        sweepAngle = 360f,
+                        useCenter = false,
+                        style = Stroke(width = strokeWidth)
+                    )
+                }
+
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val strokeWidth = 14.dp.toPx()
+                    var startAngle = -90f
+                    
+                    val mangaSweep = animManga.value
+                    if (mangaSweep > 0f) {
+                        drawArc(
+                            color = SoraBlue,
+                            startAngle = startAngle,
+                            sweepAngle = mangaSweep,
+                            useCenter = false,
+                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                        )
+                        startAngle += mangaSweep
+                    }
+
+                    val cacheSweep = animCache.value
+                    if (cacheSweep > 0f) {
+                        drawArc(
+                            color = CacheBlue,
+                            startAngle = startAngle,
+                            sweepAngle = cacheSweep,
+                            useCenter = false,
+                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                        )
+                        startAngle += cacheSweep
+                    }
+
+                    val freeSweep = animFree.value
+                    if (freeSweep > 0f) {
+                        drawArc(
+                            color = FreeGrey,
+                            startAngle = startAngle,
+                            sweepAngle = freeSweep,
+                            useCenter = false,
+                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                        )
+                    }
+                }
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "TOTAL USED",
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        letterSpacing = 1.sp
+                    )
+                    Text(
+                        text = if (isCalculating) "..." else Formatter.formatFileSize(context, usedSpace),
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Text(
+                        text = if (isCalculating) "OF ..." else "OF ${Formatter.formatFileSize(context, totalSpace).uppercase()}",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                StorageLegendItem(color = SoraBlue, label = "MANGA", value = if (isCalculating) "..." else Formatter.formatFileSize(context, mangaSpace))
+                StorageLegendItem(color = CacheBlue, label = "CACHE", value = if (isCalculating) "..." else Formatter.formatFileSize(context, cacheSpace))
+                StorageLegendItem(color = FreeGrey, label = "FREE", value = if (isCalculating) "..." else Formatter.formatFileSize(context, freeSpace))
+            }
+        }
+    }
+
+    @Composable
+    private fun StorageLegendItem(color: Color, label: String, value: String) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .background(color, CircleShape)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Column {
+                Text(text = label, color = Color.Gray, fontSize = 12.sp, letterSpacing = 1.sp)
+                Text(text = value, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+
+    @Composable
+    private fun SectionTitle(title: String) {
+        Text(
+            text = title,
+            fontSize = 12.sp,
+            letterSpacing = 2.sp,
+            color = Color.Gray,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
         )
     }
 
     @Composable
-    private fun ColumnSelectionDialog(
-        options: ExportOptions,
-        onConfirm: (ExportOptions) -> Unit,
-        onDismissRequest: () -> Unit,
-    ) {
-        var titleSelected by remember { mutableStateOf(options.includeTitle) }
-        var authorSelected by remember { mutableStateOf(options.includeAuthor) }
-        var artistSelected by remember { mutableStateOf(options.includeArtist) }
-
-        AlertDialog(
-            onDismissRequest = onDismissRequest,
-            title = {
-                Text(text = stringResource(MR.strings.migration_dialog_what_to_include))
-            },
-            text = {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = titleSelected,
-                            onCheckedChange = { checked ->
-                                titleSelected = checked
-                                if (!checked) {
-                                    authorSelected = false
-                                    artistSelected = false
-                                }
-                            },
-                        )
-                        Text(text = stringResource(MR.strings.title))
-                    }
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = authorSelected,
-                            onCheckedChange = { authorSelected = it },
-                            enabled = titleSelected,
-                        )
-                        Text(text = stringResource(MR.strings.author))
-                    }
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = artistSelected,
-                            onCheckedChange = { artistSelected = it },
-                            enabled = titleSelected,
-                        )
-                        Text(text = stringResource(MR.strings.artist))
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onConfirm(
-                            ExportOptions(
-                                includeTitle = titleSelected,
-                                includeAuthor = authorSelected,
-                                includeArtist = artistSelected,
-                            ),
-                        )
-                        onDismissRequest()
-                    },
-                ) {
-                    Text(text = stringResource(MR.strings.action_save))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismissRequest) {
-                    Text(text = stringResource(MR.strings.action_cancel))
-                }
-            },
+    private fun CardContainer(content: @Composable ColumnScope.() -> Unit) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .background(CardBackground, RoundedCornerShape(20.dp))
+                .padding(20.dp),
+            content = content
         )
+    }
+
+    @Composable
+    private fun LocationItem(
+        iconVector: androidx.compose.ui.graphics.vector.ImageVector,
+        title: String,
+        subtitle: String,
+        onClick: () -> Unit
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { onClick() },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(SoraBlue, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(imageVector = iconVector, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = title, color = Color.White, fontSize = 16.sp)
+                Text(text = subtitle, color = Color.Gray, fontSize = 12.sp, maxLines = 1)
+            }
+            Icon(imageVector = Icons.Outlined.ChevronRight, contentDescription = null, tint = Color.Gray)
+        }
+    }
+
+    @Composable
+    private fun ToggleItem(
+        iconVector: androidx.compose.ui.graphics.vector.ImageVector,
+        title: String,
+        subtitle: String,
+        isChecked: Boolean,
+        onCheckedChange: (Boolean) -> Unit
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(SoraBlue, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(imageVector = iconVector, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = title, color = Color.White, fontSize = 16.sp)
+                Text(text = subtitle, color = Color.Gray, fontSize = 12.sp)
+            }
+            Switch(
+                checked = isChecked,
+                onCheckedChange = onCheckedChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = SoraBlue,
+                    uncheckedThumbColor = Color.Gray,
+                    uncheckedTrackColor = Color(0xFF333333)
+                )
+            )
+        }
+    }
+
+    @Composable
+    private fun ActionItem(
+        iconVector: androidx.compose.ui.graphics.vector.ImageVector,
+        title: String,
+        subtitle: String,
+        trailingText: String,
+        onClick: () -> Unit
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { onClick() },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(SoraBlue, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(imageVector = iconVector, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = title, color = Color.White, fontSize = 16.sp)
+                Text(text = subtitle, color = Color.Gray, fontSize = 12.sp)
+            }
+            Text(text = trailingText, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        }
     }
 }

@@ -23,6 +23,25 @@ import tachiyomi.domain.category.model.Category
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import tachiyomi.domain.library.service.LibraryPreferences
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
 @Composable
 fun ReorderableCollectionItemScope.CategoryListItem(
@@ -32,46 +51,76 @@ fun ReorderableCollectionItemScope.CategoryListItem(
     onHide: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    ElevatedCard(modifier = modifier) {
+    val libraryPreferences = remember { Injekt.get<LibraryPreferences>() }
+    val categoryColors = libraryPreferences.categoryColors().get()
+    
+    // Format: "categoryId:#RRGGBB"
+    val colorHexStr = remember(categoryColors, category.id) {
+        val entry = categoryColors.find { it.startsWith("${category.id}:") }
+        entry?.substringAfter(":") ?: "#2D7CFF" // Fallback to Sora Blue
+    }
+    
+    val tagColor = remember(colorHexStr) {
+        try {
+            Color(android.graphics.Color.parseColor(colorHexStr))
+        } catch (e: Exception) {
+            Color(0xFF2D7CFF)
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(70.dp)
+            .clip(RoundedCornerShape(30.dp))
+            .background(Color(0xFF1E1E1E)) // Dark Grey Container
+            .clickable(onClick = onRename)
+            .padding(horizontal = 18.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onRename)
-                .padding(vertical = MaterialTheme.padding.small)
-                .padding(
-                    start = MaterialTheme.padding.small,
-                    end = MaterialTheme.padding.medium,
-                ),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 imageVector = Icons.Outlined.DragHandle,
                 contentDescription = null,
+                tint = Color.Gray,
                 modifier = Modifier
-                    .padding(MaterialTheme.padding.medium)
-                    .draggableHandle(),
+                    .draggableHandle()
+                    .padding(end = 12.dp),
             )
+            
+            // Color Dot
+            Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .background(tagColor, CircleShape)
+            )
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
             Text(
                 text = category.name,
                 modifier = Modifier.weight(1f),
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium
             )
-            IconButton(onClick = onRename) {
-                Icon(
-                    imageVector = Icons.Outlined.Edit,
-                    contentDescription = stringResource(MR.strings.action_rename_category),
-                )
-            }
-            IconButton(onClick = onHide) {
-                Icon(
-                    imageVector = if (category.hidden) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                    contentDescription = stringResource(if (category.hidden) MR.strings.action_show else MR.strings.action_hide),
-                )
-            }
-            IconButton(onClick = onDelete) {
-                Icon(
-                    imageVector = Icons.Outlined.Delete,
-                    contentDescription = stringResource(MR.strings.action_delete),
-                )
+
+            CompositionLocalProvider(LocalContentColor provides Color.Gray) {
+                IconButton(onClick = onHide) {
+                    Icon(
+                        imageVector = if (category.hidden) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                        contentDescription = stringResource(if (category.hidden) MR.strings.action_show else MR.strings.action_hide),
+                    )
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        imageVector = Icons.Outlined.Delete,
+                        contentDescription = stringResource(MR.strings.action_delete),
+                    )
+                }
             }
         }
     }

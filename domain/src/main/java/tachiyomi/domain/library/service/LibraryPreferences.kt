@@ -129,6 +129,8 @@ class LibraryPreferences(
 
     fun updateCategoriesExclude() = preferenceStore.getStringSet(LIBRARY_UPDATE_CATEGORIES_EXCLUDE_PREF_KEY, emptySet())
 
+    fun categoryColors() = preferenceStore.getStringSet("category_colors", emptySet())
+
     // endregion
 
     // region Chapter
